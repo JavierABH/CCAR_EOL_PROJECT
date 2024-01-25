@@ -13,18 +13,3 @@ class TraceabilityError(Exception):
         """
         self.message = message
         super().__init__(self.message)
-        
-class BarcodeError(Exception):
-    """
-    Exception raised if a DUT barcode is incorrect.
-    """
-
-    def __init__(self, message="The barcode is not valid for this station."):
-        """
-        Raise a barcode error.
-
-        Args:
-            message (str): Error message text.
-        """
-        self.message = message
-        super().__init__(self.message)

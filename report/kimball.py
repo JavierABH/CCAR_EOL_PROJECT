@@ -10,7 +10,7 @@ import clr
 from configparser import ConfigParser
 from pathlib import Path
 import logger as log
-from exceptions import TraceabilityError, BarcodeError
+from exceptions import TraceabilityError
 
 # Paths to folders relative to this py file.
 local_path = os.path.dirname(os.path.abspath(__file__))
@@ -45,6 +45,8 @@ class Kimball_Trace:
             # Lowercase the status in case of user input error.
             self.trace_enable = (config["OPTIONS"]["trace_enable"]).lower()
             self.record_fail = (config["OPTIONS"]["record_fail"]).lower()
+            # if self.trace_enable == 'off'
+            
             self.part_number = config[dut_name.upper()]["part_number"]
             
             self.process_name = config["STATION"]["process_name"]
@@ -66,8 +68,16 @@ class Kimball_Trace:
         except Exception:
             logger.exception("An error occurred when making connection with Traceability system.")
             raise
-            
-    def is_valid_serial(self, serial_number , serial_length = ):
+    
+    # valid
+    def is_valid_serial(self, serial_number , length = 30):
+        serial_number_length = len(serial_number)
+        if serial_number_length == length:
+            return True
+        else:
+            return False
+        
+    def is_valid_partnumber(self, serial):
         pass
     
     def start_test(self):
@@ -75,3 +85,4 @@ class Kimball_Trace:
     
     def send_result(self):
         pass
+    
