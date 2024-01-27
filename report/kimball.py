@@ -2,9 +2,6 @@
 This module is for Kimball Traceability system
 """
 
-import sys
-sys.path.append(r'C:\CCAR_EOL_Project')
-
 import os
 import clr
 from configparser import ConfigParser
@@ -42,15 +39,21 @@ class Kimball_Trace:
             self.wsconnector_path = config["PATHS"]["wsconnector_path"]
             self.newtonsoftjson_path = config["PATHS"]["newtonsoftjson_path"]
             
+            # Settings to be used
+            self.is_status_set = False
+            self.can_testing = False
+            
             # Lowercase the status in case of user input error.
             self.trace_enable = (config["OPTIONS"]["trace_enable"]).lower()
             self.record_fail = (config["OPTIONS"]["record_fail"]).lower()
-            # if self.trace_enable == 'off'
-            
             self.part_number = config[dut_name.upper()]["part_number"]
-            
             self.process_name = config["STATION"]["process_name"]
             self.station_name = config["STATION"]["station_name"]
+            
+            # If the Traceability is desactivated in settings, no actions associated with the system will be executed.
+            if not self.is_traceability_enable():
+                logger.debug(f'The traceability system is disabled.')
+                return None
             
             clr.AddReference(self.newtonsoftjson_path)
             clr.AddReference(self.wsconnector_path)
@@ -68,21 +71,259 @@ class Kimball_Trace:
         except Exception:
             logger.exception("An error occurred when making connection with Traceability system.")
             raise
-    
-    # valid
-    def is_valid_serial(self, serial_number , length = 30):
-        serial_number_length = len(serial_number)
-        if serial_number_length == length:
-            return True
-        else:
-            return False
-        
-    def is_valid_partnumber(self, serial):
-        pass
-    
+
+    def valid_serial(self, serial_number , length = 30):
+        """
+        Verifies if the serial number passed on is of the correct length
+
+        Args:
+            serial_number (String) - The serial number on the DUT.
+            length (int, optional): Set the length of the serial number on the DUT. Defaults to 30.
+
+        Returns:
+            Boolean: The result of whether the method was executed successfully.
+        """        
+        try:
+            if not self.is_traceability_enable():
+                logger.debug(f'The traceability system is disabled. No serial validation is performed')
+                return True
+            
+            serial_number_length = len(serial_number)
+            if serial_number_length == length:
+                return True
+            else:
+                logger.debug(f'the serial number {serial_number} does not have the required characters: {length}')
+                return False
+        except Exception:
+            logger.exception("An error occurred when valid serial .")
+            raise
+
+    def valid_partnumber(self, serial_number):
+        """
+        Verifies if the serial number passed on is of the correct part number i.e. of the right DUT.
+
+        Parameter:
+                serial_number (String) - The serial number on the DUT.
+
+        Returns:
+                (Boolean) - The result of whether the method was executed successfully. 
+
+        Exception:
+                An exception arises when there is an error in the serial number scanned.
+        """       
+        reply_part_number, _ = " ", " "
+        try:
+
+            # If the Traceability is deactivated in settings, no actions associated with the system will be executed.
+            if not self.is_traceability_enable():
+                logger.debug(f'The traceability system is disabled. No part number validation is performed')
+                return True
+
+            self.serial_number = serial_number
+
+            # Part number is tracked with the serial number
+            reply_part_number, _ =  self.connector.CIMP_PartNumberRef(self.serial_number, 1, _)
+            
+            self.test_start_time = None
+            self.test_end_time = None
+
+            if reply_part_number == '' or reply_part_number == 'One or more errors occurred.':
+                raise TraceabilityError('Connection error to the Traceability system.')
+            elif not (reply_part_number == self.part_number):
+                raise TraceabilityError(f"Error in verifying scanned serial number: {reply_part_number}")
+            else:
+                logger.debug("The serial number scanned is of the correct DUT.")
+                return True
+
+        except TraceabilityError:
+            logger.exception("An exception was raised in verifying scanned serial number.")
+            raise          
+        except Exception:
+            logger.exception("An exception was raised in verifying scanned serial number.")
+            raise
+
     def start_test(self):
-        pass
+        """
+        Checks if the DUT is undergoing the correct process and then, collects the start time of test.
+
+        Parameter:
+                None
+
+        Returns:
+                (Boolean) - The result of whether the method was executed successfully. 
+
+        Exception:
+                An exception arises when there is a mismatch between the 
+        """
+        self.reply_TracMex = None       
+        try:
+            # If the Traceability is deactivated in settings, no actions associated with the system will be executed.
+            if not self.is_traceability_enable():
+                logger.debug(f'The traceability system is disabled. Backcheck not perfomed.')
+                return True
+
+            replyBackCheck = self.connector.BackCheck_Serial(self.serial_number, self.station_name)
+            logger.debug(f"Serial: {self.serial_number}, bk: {replyBackCheck}")
+            status = replyBackCheck.split('|')[0]
+            self.reply_TracMex = replyBackCheck.split('|')[1]
+            
+            if self.reply_TracMex == 'One or more errors occurred.':
+                raise TraceabilityError(f"An Error ocurred as process name does not match: {replyBackCheck}.")
+            
+            if not status == 1:
+                self.reply_TracMex = replyBackCheck.split('|')[1]
+                return False
+            
+            # Request the start time (initial).
+            self.test_start_time = self.connector.CIMP_GetDateTimeStr()
+            return True
+
+        except TraceabilityError:
+            logger.exception("An exception was raised when starting the tests in the Traceability system.")
+            raise
+        except Exception:
+            logger.exception("An error occurred when indicating starting of tests in the traceability system.")
+            raise
     
-    def send_result(self):
-        pass
+    def send_result(self, test_result, fail_string, employee):
+        """
+        At the end of the test, takes the result and sends the test information to the Traceability system.
+
+        Parameter:
+                test_result - The result (0 is "FAIL, 1 is "OK") of the test.
+                failure_string - The response of the test in case of failure.
+                employee - The number employee performing the test.
+
+        Returns:
+                (Boolean) - The result of whether the method was executed successfully. 
+
+        Exception:
+                An exception arises when there is an issue with inserting a record to the database.
+        """       
+        try:
+            # If the Traceability is deactivated in settings, no actions associated with the system will be executed.
+            if not self.is_traceability_enable():
+                logger.debug(f'The traceability system is disabled. InsertProcess not perfomed.')
+                return True
+            
+            # The time when test has ended is collected and testing mode (flag) is switched off (False).    
+            self.test_end_time = self.connector.CIMP_GetDateTimeStr()
+
+            # The test result with the details of the test setup is sent to the Traceability system.
+            replyInsert = self.connector.InsertProcessDataWithFails(self.serial_number, self.station_name, self.process_name, self.test_start_time, self.test_end_time, test_result, fail_string, employee)
+
+            # If the insertion of the record occurs 
+            if "Ok El serial fue insertado" in replyInsert or "OK | Insertado Correctamente" in replyInsert:
+                logger.debug(f"Serial {self.serial_number}: {self.process_name} was passed successfully.")
+                return True
+            else:
+                self.replyInsert = replyInsert
+                raise TraceabilityError(f"An Error ocurred as the traceability failed to upload: {replyInsert}")
+
+        except TraceabilityError:
+            logger.exception("An exception was raised when ending the tests in the Traceability system.")
+            raise    
+
+        except (RuntimeError, Exception):
+            logger.exception("An error occurred when indicating ending of tests in the traceability system.")
+            return False
     
+    def _get_value(self, info, keyname):
+        """
+        Get the value associated with a specific keyname from the provided info.
+
+        Parameters:
+            info (list): List of tuples containing key-value pairs.
+            keyname (str): The key to search for in the dictionaries within the tuples.
+
+        Returns:
+            The value associated with the specified keyname. Returns None if the key is not found.
+
+        Exceptions:
+            An exception is raised if an error occurs while searching for the keyname in the info list.
+        """
+        try:
+            for tupla in info:
+                if keyname in tupla[1]:
+                    return tupla[1][keyname]
+            return None
+        except Exception:
+            logger.exception("An error occurred when get key types of upload data in the traceability system.")
+            raise
+    
+    def send_info_alternate(self, serial_alternate, type_alt, keyname):
+        """
+        Sends alternate information to the Traceability system.
+
+        Parameters:
+            serial_alternate (str): The alternate serial number.
+            type_alt (int): The type of alternate information.
+            keyname (str): The keyname to retrieve the type_alt value from the case settings list.
+
+        Returns:
+            True if the method was executed successfully.
+
+        Exceptions:
+            An exception is raised if an error occurs during the execution of the method.
+        """
+        type_alt = int(self._get_value(self.case_settings_lst, keyname))
+        
+        try:
+            # If the Traceability is deactivated in settings, no actions associated with the system will be executed.
+            if not self.is_traceability_enable():
+                logger.debug(f'The traceability system is disabled. InsertProcess not perfomed.')
+                return None
+            reply_insert_alt = self.connector.Insert_SN_Alternate(self.serial_number, serial_alternate, type_alt, self.station_name)
+            if not reply_insert_alt == 'OK':
+                raise TraceabilityError(f"An error ocurred as the traceability failed to upload {keyname}: {reply_insert_alt}")
+            
+            return True
+            
+        except TraceabilityError:
+            logger.exception("An exception was raised when ending the tests in the Traceability system.")
+            raise
+        except Exception:
+            logger.exception("An error occurred when indicating ending of tests in the traceability system.")
+            raise
+    
+    def is_traceability_enable(self):
+        '''
+        The indicator for the traceability system indicates whether the system is enable or disabled.
+
+        Parameter:
+                None
+
+        Returns:
+                (Boolean) - The result being the status of the system: True or False.
+
+        Exception:
+                An exception arises when there is an issue with returning the status.
+        '''
+        try:
+            # Check if the user has entered the wrong settings in 'OPTIONS' of settings.ini
+            if not self.is_status_set:
+                if self.trace_enable not in ['on', 'off']:
+                    raise TraceabilityError(f"An error ocurred as the traceability's status is unrecognized : {self.trace_enable}.")
+                if self.record_fail not in ['on', 'off']:
+                    raise TraceabilityError(f"An error ocurred as the traceability's status is unrecognized : {self.record_fail}.")
+            
+            # When Status is not set, the status is parsed from the settings.ini
+            # and converted to either 'Connected' or 'Disabled'.
+            if not self.is_status_set:
+                
+                if self.trace_enable == 'on':
+                    self.trace_enable = True
+                elif self.trace_enable == 'off':
+                    self.trace_enable = False
+                    
+                if self.record_fail == 'on':
+                    self.record_fail = True
+                elif self.record_fail == 'off':
+                    self.record_fail = False
+                    
+                self.is_status_set = True
+                
+            return self.trace_enable
+        except (TraceabilityError,Exception):
+            logger.debug("An exception was raised when the status of traceability integration is checked.")
+            raise

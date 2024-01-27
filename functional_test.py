@@ -34,7 +34,6 @@ except Exception:
     sys.exit()
 logger.debug('Importing completed.')
 
-
 def main():
     # pups.ok('ok')
     # pups.yes_no('yes_no')
@@ -42,7 +41,7 @@ def main():
     # pups.notify('notify')
     # pups.quick_msg('quick_msg')
     # print(sg.popup_get_text('text'))
-    # pups.image_yes_no('The DUT is power on?', r'Pictures\5 Boot image.PNG')
+    pups.image_yes_no('The DUT is power on?', r'Pictures\5 Boot image.PNG')
     pups.serial()
     pass
     
