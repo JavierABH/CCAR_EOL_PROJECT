@@ -106,7 +106,6 @@ class ProgramHandler:
         """
         try:
             pyautogui.hotkey("win", "up")
-            logger.debug(f"{self.program} was maximize")
             time.sleep(2)
         except Exception as e:
             logger.exception(f"Error maximizing {self.program}: {e}")
@@ -120,10 +119,36 @@ class ProgramHandler:
         """    
         try:
             pyautogui.hotkey("win", "down")
-            logger.debug(f"{self.program} was restore down")
             time.sleep(2)
         except Exception as e:
-            logger.exception(f"Error to restore down {self.program}: {e}")        
+            logger.exception(f"Error to restore down {self.program}: {e}")
+            
+    def minimize_window(self):
+        """
+        Minimizes the active window.
+
+        Returns:
+            None
+        """    
+        try:
+            pyautogui.hotkey("win", "down")
+            pyautogui.hotkey("win", "down")
+            time.sleep(2)
+        except Exception as e:
+            logger.exception(f"Error minimizing {self.program}: {e}")
+            
+    def show_desktop(self):
+        """
+        Hide all windows
+
+        Returns:
+            None
+        """    
+        try:
+            pyautogui.hotkey("win", "d")
+            time.sleep(2)
+        except Exception as e:
+            logger.exception(f"Error to show desktop: {e}")
 
     def click_coordinates(self, x, y, time_duration=0.5):
         """
