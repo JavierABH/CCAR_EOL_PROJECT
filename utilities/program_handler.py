@@ -2,13 +2,32 @@
 Module for control applications
 """
 
+import os
+from pathlib import Path
 import time
 import subprocess
+import logger as log
 import psutil
 import pyautogui
 import keyboard
 import pytesseract
 import pygetwindow as gw
+
+# Paths to folders relative to this py file.
+local_path = os.path.dirname(os.path.abspath(__file__))
+parent_path = Path(local_path).parent.absolute()
+
+# The paths to output the logging and the database file datas.
+log_path = os.path.join(parent_path, "app_log")
+
+# Note: Traceability system logging is sent to a dedicated file due to track any issues with the external system at ease.
+logger = log.make_logger(
+    f_hdlr="rotate",
+    save_path=log_path,
+    log_prefix="handler_log",
+    debug=1,
+    logger_name="handler_logger"
+)
 
 class ProgramHandler:
     def __init__(self, app_path) -> None:
@@ -28,17 +47,41 @@ class ProgramHandler:
         """
         try:
             subprocess.Popen(self.app_path)
+            logger.debug(f'{self.program} is opened')
             # time.sleep(10)  # Wait seconds for the application to open
         except Exception as e:
-            print(f"Error opening application: {e}")
+            logger.exception(f"Error opening application: {e}")
 
     def close_application(self):
-        for process in psutil.process_iter(['pid', 'name']):
-            if process.info['name'] == self.program:
-                psutil.Process(process.info['pid']).terminate()
-                self.opened = False
+        """
+        Checks if the specified application is currently running.
+
+        This method iterates through the running processes and sets the 'opened'
+        attribute to True if the specified program is found.
+
+        Returns:
+            bool: True if the application is running, False otherwise.
+        """
+        try:
+            for process in psutil.process_iter(['pid', 'name']):
+                if process.info['name'] == self.program:
+                    psutil.Process(process.info['pid']).terminate()
+                    self.opened = False
+                    logger.debug(f'{self.program} was closed')
+        except Exception as e:
+            logger.exception(f"Error to close application: {e}")                    
+        
     
     def is_open_application(self):
+        """
+        Checks if the specified application is currently running.
+
+        This method iterates through the running processes and sets the 'opened'
+        attribute to True if the specified program is found.
+
+        Returns:
+            bool: True if the application is running, False otherwise.
+        """
         for process in psutil.process_iter(['pid', 'name']):
             if process.info['name'] == self.program:
                 self.opened = True
@@ -46,6 +89,12 @@ class ProgramHandler:
         return False
 
     def is_opened(self):
+        """
+        Returns the status of the 'opened' attribute.
+
+        Returns:
+            bool: True if the application is open, False otherwise.
+        """
         return self.opened
 
     def maximize_window(self):
@@ -57,9 +106,24 @@ class ProgramHandler:
         """
         try:
             pyautogui.hotkey("win", "up")
+            logger.debug(f"{self.program} was maximize")
             time.sleep(2)
         except Exception as e:
-            print(f"Error maximizing window: {e}")
+            logger.exception(f"Error maximizing {self.program}: {e}")
+            
+    def restore_window(self):
+        """
+        Restore down the active window.
+
+        Returns:
+            None
+        """    
+        try:
+            pyautogui.hotkey("win", "down")
+            logger.debug(f"{self.program} was restore down")
+            time.sleep(2)
+        except Exception as e:
+            logger.exception(f"Error to restore down {self.program}: {e}")        
 
     def click_coordinates(self, x, y, time_duration=0.5):
         """
@@ -80,7 +144,7 @@ class ProgramHandler:
             else:
                 raise ValueError("Coordinates must be integers.")
         except Exception as e:
-            print(f"Error clicking on coordinate: {e}")
+            logger.exception(f"Error clicking on coordinate: {e}")
 
     def double_click_coordinates(self, x, y, time_duration=0.5):
         """
@@ -101,7 +165,7 @@ class ProgramHandler:
             else:
                 raise ValueError("Coordinates must be integers.")
         except Exception as e:
-            print(f"Error double-clicking on coordinate: {e}")
+            logger.exception(f"Error double-clicking on coordinate: {e}")
 
     def write_text(self, text):
         """
@@ -116,7 +180,7 @@ class ProgramHandler:
         try:
             pyautogui.write(text)
         except Exception as e:
-            print(f"Error writing text: {e}")
+            logger.exception(f"Error writing text: {e}")
 
     def press_key(self, key):
         """
@@ -131,7 +195,7 @@ class ProgramHandler:
         try:
             pyautogui.press(key)
         except Exception as e:
-            print(f"Error pressing key: {e}")
+            logger.exception(f"Error pressing key: {e}")
 
     def press_keys(self, *keys):
         """
@@ -146,7 +210,7 @@ class ProgramHandler:
         try:
             pyautogui.hotkey(*keys)
         except Exception as e:
-            print(f"Error pressing keys: {e}")
+            logger.exception(f"Error pressing keys: {e}")
 
     def freeze(self, seconds):
         """
@@ -171,7 +235,7 @@ class ProgramHandler:
             position = pyautogui.position()
             return position
         except Exception as e:
-            print(f"Error getting mouse position: {e}")
+            logger.exception(f"Error getting mouse position: {e}")
 
     def mouse_position_on_key_press(self, key_to_monitor='space'):
         """
@@ -180,7 +244,7 @@ class ProgramHandler:
         Args:
             key_to_monitor (str, optional): The key to monitor for key presses. Defaults to 'space'.
         """
-        print(f"Press the '{key_to_monitor}' key to get mouse coordinates. Press 'esc' to stop monitoring.")
+        logger.debug(f"Press the '{key_to_monitor}' key to get mouse coordinates. Press 'esc' to stop monitoring.")
         counter = 1
         while True:
             # Check if the specified key is pressed
@@ -192,7 +256,7 @@ class ProgramHandler:
 
             # Check if the 'esc' key is pressed to stop the loop
             if keyboard.is_pressed('esc'):
-                print("Monitoring stopped.")
+                logger.debug("Monitoring stopped.")
                 break
 
     def press_and_release_keys(self, keys):
@@ -209,7 +273,7 @@ class ProgramHandler:
             for key in keys:
                 keyboard.press_and_release(key)
         except Exception as e:
-            print(f"Error pressing and releasing keys: {e}")
+            logger.exception(f"Error pressing and releasing keys: {e}")
 
     def press_key_kb(self, key):
         """
@@ -224,7 +288,7 @@ class ProgramHandler:
         try:
             keyboard.press(key)
         except Exception as e:
-            print(f"Error pressing key: {e}")
+            logger.exception(f"Error pressing key: {e}")
 
     def release_key(self, key):
         """
@@ -239,7 +303,7 @@ class ProgramHandler:
         try:
             keyboard.release(key)
         except Exception as e:
-            print(f"Error releasing key: {e}")
+            logger.exception(f"Error releasing key: {e}")
 
     def key_name(self):
         """
@@ -250,9 +314,9 @@ class ProgramHandler:
         """
         try:
             key = keyboard.read_key()
-            print(f"You pressed: {key}")
+            logger.debug(f"You pressed: {key}")
         except Exception as e:
-            print(f"Error identifying key: {e}")
+            logger.exception(f"Error identifying key: {e}")
 
     def get_screenshot(self, x, y, x_end, y_end):
         """
@@ -271,7 +335,7 @@ class ProgramHandler:
             screenshot = pyautogui.screenshot(region=(x, y, x_end - x, y_end - y))
             return screenshot
         except Exception as e:
-            print(f'Error with screenshot {e}')
+            logger.exception(f'Error with screenshot {e}')
             return f'Error: {e}'
         
     def perfom_ocr(self, image, language= 'eng'):
@@ -289,7 +353,7 @@ class ProgramHandler:
             extracted_text = pytesseract.image_to_string(image, lang = language)
             return extracted_text
         except Exception as e:
-            print(f'Error in OCR: {e}')
+            logger.exception(f'Error in OCR: {e}')
             return f'Error: {e}'
         
     def set_window(self, target_window_title, x, y):
@@ -313,4 +377,4 @@ class ProgramHandler:
         if target_window:
             target_window.moveTo(x, y)
         else:
-            print(f"Not found window with the title '{target_window_title}'")
+            logger.exception(f"Not found window with the title '{target_window_title}'")
