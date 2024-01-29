@@ -1,4 +1,6 @@
-power_on, Yes, Yes
-download_V4APP, Yes, Yes
-display, Yes, Yes
-value, F15, F10
+Testname,Low_limit,High_limit,Expected_Value,Unit,Logic_operator
+tracmex,NA,NA,NA,NA,NA
+power_on,True,True,True,boolean,==
+download_V4APP,True,True,True,boolean,==
+display,True,True,True,boolean,==
+value,10,15,NA,string,<>

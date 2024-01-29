@@ -190,9 +190,9 @@ class Kimball_Trace:
         At the end of the test, takes the result and sends the test information to the Traceability system.
 
         Parameter:
-                test_result - The result (0 is "FAIL, 1 is "OK") of the test.
-                failure_string - The response of the test in case of failure.
-                employee - The number employee performing the test.
+                test_result (Int) - The result (0 is "FAIL, 1 is "OK") of the test.
+                failure_string (String) - The response of the test in case of failure.
+                employee (String) - The number employee performing the test.
 
         Returns:
                 (Boolean) - The result of whether the method was executed successfully. 
@@ -208,9 +208,15 @@ class Kimball_Trace:
             
             # The time when test has ended is collected and testing mode (flag) is switched off (False).    
             self.test_end_time = self.connector.CIMP_GetDateTimeStr()
-
+            
+            if not self.record_fail and test_result == 0:
+                logger.debug(f"Serial {self.serial_number} not failure saved {fail_string}.")
+                return True
+                
             # The test result with the details of the test setup is sent to the Traceability system.
-            replyInsert = self.connector.InsertProcessDataWithFails(self.serial_number, self.station_name, self.process_name, self.test_start_time, self.test_end_time, test_result, fail_string, employee)
+            replyInsert = self.connector.InsertProcessDataWithFails(
+                self.serial_number, self.station_name, self.process_name,self.test_start_time,
+                self.test_end_time, test_result, fail_string, employee)
 
             # If the insertion of the record occurs 
             if "Ok El serial fue insertado" in replyInsert or "OK | Insertado Correctamente" in replyInsert:
@@ -272,7 +278,7 @@ class Kimball_Trace:
             # If the Traceability is deactivated in settings, no actions associated with the system will be executed.
             if not self.is_traceability_enable():
                 logger.debug(f'The traceability system is disabled. InsertProcess not perfomed.')
-                return None
+                return True
             reply_insert_alt = self.connector.Insert_SN_Alternate(self.serial_number, serial_alternate, type_alt, self.station_name)
             if not reply_insert_alt == 'OK':
                 raise TraceabilityError(f"An error ocurred as the traceability failed to upload {keyname}: {reply_insert_alt}")

@@ -18,7 +18,7 @@ log_path = os.path.join(parent_path, "app_log")
 logger = log.make_logger(
     f_hdlr="rotate",
     save_path=log_path,
-    log_prefix="popup_logger",
+    log_prefix="gui_logger",
     debug=1,
     logger_name="gui_logger"
 )

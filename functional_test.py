@@ -48,12 +48,15 @@ def main():
     pups = popups
     kt = Kimball_Trace()
     
+    test_fail = None
+    test_data = None
+    
     while(True):
         try:
             # Ask the DUT serial to operador
             serial = pups.serial('Captura de serial')
             if serial == None:
-                popups.quick_msg('Se esta cerrando la secuencia', display_sec= 5)
+                popups.quick_msg('Cerrando la secuencia', display_sec= 5)
                 logger.debug('Sequence is closing')
                 break
             elif serial == "" or not kt.valid_serial(serial):
@@ -68,16 +71,20 @@ def main():
                 popups.ok(kt.reply_TracMex, background_color= 'red')
                 continue
             
-            result_turn_on = popups.image_yes_no('test', get_value('path_image_1'))
-            if result_turn_on == 'No':
-                popups.ok('Unidad no enciendo, entregar a analisis', background_color= 'red')
-                continue
+            while(True):
+                result_turn_on = popups.image_yes_no('test', get_value('path_image_1'))
+                if result_turn_on == 'No':
+                    popups.ok('Unidad no enciendo, entregar a analisis', background_color= 'red')
+                    test_fail = 'power_on'
+                    test_data = 'False'
+                    break
 
-            popups.image_ok('Presione OK cuando la unidad muestre esta pantalla', get_value('path_image_2'))
+                popups.image_ok('Presione OK cuando la unidad muestre esta pantalla', get_value('path_image_2'))
             
         except Exception as e:
             logger.exception(f'The sequence is closing for exception, {e}')
-            popups.quick_msg('Cerrando la secuencia por un error, revisar el logfile', display_sec= 5)
+            popups.quick_msg('Cerrando la secuencia por un error, revisar el logfile funcional_log.log', display_sec= 5) 
+        finally:
             sys.exit()
 
 if __name__ == '__main__':
