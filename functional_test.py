@@ -23,8 +23,9 @@ logger.debug("Logging is alive.")
 # Trying importing other modules. End program if error.
 try:
     import sys
-    
-    from gui import popups as pups
+    from gui import popups
+    from report.kimball import Kimball_Trace
+    from configparser import ConfigParser
     
 except ImportError as ie:
     logger.exception(f"An error occurred during initial import. Exiting.\n{ie}")
@@ -34,17 +35,50 @@ except Exception:
     sys.exit()
 logger.debug('Importing completed.')
 
+settings_fname = "test_settings.ini"
+config = ConfigParser()
+config.read(os.path.join(app_path, 'settings', settings_fname))
+settings_lst = [(s, dict(config.items(s))) for s in config.sections()]
+
+def get_value(keyname):
+    value = Kimball_Trace().get_value_ini(settings_lst, keyname)
+    return value
+
 def main():
-    # pups.ok('ok')
-    # pups.yes_no('yes_no')
-    # pups.ok_cancel('ok_cancel')
-    # pups.notify('notify')
-    # pups.quick_msg('quick_msg')
-    # print(sg.popup_get_text('text'))
-    pups.image_yes_no('The DUT is power on?', r'Pictures\5 Boot image.PNG')
-    pups.serial()
-    pass
+    pups = popups
+    kt = Kimball_Trace()
     
+    while(True):
+        try:
+            # Ask the DUT serial to operador
+            serial = pups.serial('Captura de serial')
+            if serial == None:
+                popups.quick_msg('Se esta cerrando la secuencia', display_sec= 5)
+                logger.debug('Sequence is closing')
+                break
+            elif serial == "" or not kt.valid_serial(serial):
+                popups.ok('Serial no valido, vuelva a escanear', background_color= 'red')
+                continue
+            
+            if not kt.valid_partnumber(serial):
+                popups.ok('El numero de parte escaneado es incorrecto', background_color= 'red')
+                continue
+            
+            if not kt.start_test():
+                popups.ok(kt.reply_TracMex, background_color= 'red')
+                continue
+            
+            result_turn_on = popups.image_yes_no('test', get_value('path_image_1'))
+            if result_turn_on == 'No':
+                popups.ok('Unidad no enciendo, entregar a analisis', background_color= 'red')
+                continue
+
+            popups.image_ok('Presione OK cuando la unidad muestre esta pantalla', get_value('path_image_2'))
+            
+        except Exception as e:
+            logger.exception(f'The sequence is closing for exception, {e}')
+            popups.quick_msg('Cerrando la secuencia por un error, revisar el logfile', display_sec= 5)
+            sys.exit()
 
 if __name__ == '__main__':
     main()

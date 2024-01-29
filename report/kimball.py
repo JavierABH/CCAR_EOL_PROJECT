@@ -26,7 +26,7 @@ logger = log.make_logger(
 )
 
 class Kimball_Trace:
-    def __init__(self, dut_name):
+    def __init__(self):
         try:
             logger.debug(f"Initializing {__class__.__name__}")
             settings_fname = "settings.ini"
@@ -46,7 +46,7 @@ class Kimball_Trace:
             # Lowercase the status in case of user input error.
             self.trace_enable = (config["OPTIONS"]["trace_enable"]).lower()
             self.record_fail = (config["OPTIONS"]["record_fail"]).lower()
-            self.part_number = config[dut_name.upper()]["part_number"]
+            self.part_number = config["TRIDENT_DISPLAY"]["part_number"]
             self.process_name = config["STATION"]["process_name"]
             self.station_name = config["STATION"]["station_name"]
             
@@ -123,14 +123,12 @@ class Kimball_Trace:
 
             # Part number is tracked with the serial number
             reply_part_number, _ =  self.connector.CIMP_PartNumberRef(self.serial_number, 1, _)
-            
-            self.test_start_time = None
-            self.test_end_time = None
 
             if reply_part_number == '' or reply_part_number == 'One or more errors occurred.':
                 raise TraceabilityError('Connection error to the Traceability system.')
             elif not (reply_part_number == self.part_number):
-                raise TraceabilityError(f"Error in verifying scanned serial number: {reply_part_number}")
+                logger.debug("The serial number scanned is incorrect DUT.")
+                return False
             else:
                 logger.debug("The serial number scanned is of the correct DUT.")
                 return True
@@ -155,7 +153,9 @@ class Kimball_Trace:
         Exception:
                 An exception arises when there is a mismatch between the 
         """
-        self.reply_TracMex = None       
+        self.reply_TracMex = None
+        self.test_start_time = None
+        self.test_end_time = None   
         try:
             # If the Traceability is deactivated in settings, no actions associated with the system will be executed.
             if not self.is_traceability_enable():
@@ -171,7 +171,7 @@ class Kimball_Trace:
                 raise TraceabilityError(f"An Error ocurred as process name does not match: {replyBackCheck}.")
             
             if not status == 1:
-                self.reply_TracMex = replyBackCheck.split('|')[1]
+                self.reply_TracMex = self.reply_TracMex.split('.')[0]
                 return False
             
             # Request the start time (initial).
@@ -228,7 +228,7 @@ class Kimball_Trace:
             logger.exception("An error occurred when indicating ending of tests in the traceability system.")
             return False
     
-    def _get_value(self, info, keyname):
+    def get_value_ini(self, info, keyname):
         """
         Get the value associated with a specific keyname from the provided info.
 
@@ -266,7 +266,7 @@ class Kimball_Trace:
         Exceptions:
             An exception is raised if an error occurs during the execution of the method.
         """
-        type_alt = int(self._get_value(self.case_settings_lst, keyname))
+        type_alt = int(self.get_value_ini(self.case_settings_lst, keyname))
         
         try:
             # If the Traceability is deactivated in settings, no actions associated with the system will be executed.

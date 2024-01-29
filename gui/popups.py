@@ -1,14 +1,29 @@
 """
 Display a pop up message windows for quick messages and questions.
 """
-
-import logging
+import os
+from pathlib import Path
+import logger as log
 import time
 import PySimpleGUI as sg
 
-logger = logging.getLogger('popup_logger')
+# Paths to folders relative to this py file.
+local_path = os.path.dirname(os.path.abspath(__file__))
+parent_path = Path(local_path).parent.absolute()
 
-def ok(message, title="CCAR_EOL", text_color=None, background_color=None, font=("Arial", 18)):
+# The paths to output the logging and the database file datas.
+log_path = os.path.join(parent_path, "app_log")
+
+# Note: gui system logging is sent to a dedicated file due to track any issues with the external system at ease.
+logger = log.make_logger(
+    f_hdlr="rotate",
+    save_path=log_path,
+    log_prefix="popup_logger",
+    debug=1,
+    logger_name="gui_logger"
+)
+
+def ok(message, title="CCAR_EOL", text_color=None, background_color=None, size_font=(18)):
     """
     Display a simple popup window with OK button. Window remains open until OK is selected.
 
@@ -19,9 +34,10 @@ def ok(message, title="CCAR_EOL", text_color=None, background_color=None, font=(
         title (str, optional) - The message window header. Defaults to 'CCAR_EOL'
         text_color (str, optional): The color of the window text. Keep it simple. Defaults to None.
         background_color (str, optional): The color of the window background. Keep it simple. Defaults to None.
+        size_font (int), optional): The text size of the message.
 
     Returns:
-        str - The 'OK' text when clicked or "" if window is closed.
+        str - The 'OK' text when clicked or None if window is closed.
     """
     try:
         return sg.popup(
@@ -29,13 +45,13 @@ def ok(message, title="CCAR_EOL", text_color=None, background_color=None, font=(
             title=title,
             text_color=text_color,
             background_color=background_color,
-            font=font
+            font=("Arial", size_font)
         )
     except Exception:
         logger.exception("An Exception occurred when displaying Ok popup window.")
-        return ""
+        return None
 
-def yes_no(message, title="CCAR_EOL", text_color=None, background_color=None, font=("Arial", 18)):
+def yes_no(message, title="CCAR_EOL", text_color=None, background_color=None, size_font=18):
     """
     Display a message window with Yes and No button options.
 
@@ -46,9 +62,10 @@ def yes_no(message, title="CCAR_EOL", text_color=None, background_color=None, fo
         title (str, optional): The message window header. Defaults to "CCAR_EOL".
         text_color (str, optional): The color of the window text. Keep it simple. Defaults to None.
         background_color (str, optional): The color of the window background. Keep it simple. Defaults to None.
+        size_font (int), optional): The text size of the message.
 
     Returns:
-        str: The text of the button selected by user; 'Yes' or 'No'. "" if the window is closed.
+        str: The text of the button selected by user; 'Yes' or 'No'. None if window is closed.
     """
     try:
         rsp = sg.popup_yes_no(
@@ -56,17 +73,17 @@ def yes_no(message, title="CCAR_EOL", text_color=None, background_color=None, fo
             title=title,
             text_color=text_color,
             background_color=background_color,
-            font=font
+            font=("Arial", size_font)
         )
         logger.debug(f"Popup '{message}': {rsp}")
         if not rsp:
-            return ""
+            return None
         return rsp
     except Exception:
         logger.exception("An Exception occurred when displaying Yes No popup window.")
-        return ""
+        return None
 
-def ok_cancel(message, title="CCAR_EOL", text_color=None, background_color=None, font=("Arial", 18)):
+def ok_cancel(message, title="CCAR_EOL", text_color=None, background_color=None, size_font=18):
     """
     Display a message window with Ok and Cancel button options.
 
@@ -77,9 +94,10 @@ def ok_cancel(message, title="CCAR_EOL", text_color=None, background_color=None,
         title (str, optional): The message window header. Defaults to "CCAR_EOL".
         text_color (str, optional): The color of the window text. Keep it simple. Defaults to None.
         background_color (str, optional): The color of the window background. Keep it simple. Defaults to None.
+        size_font (int), optional): The text size of the message.
 
     Returns:
-        str: The text of the button selected by user; 'Ok' or 'Cancel'. "" if the window is closed.
+        str: The text of the button selected by user; 'Ok' or 'Cancel'. None if window is closed.
     """
     try:
         rsp = sg.popup_ok_cancel(
@@ -87,17 +105,17 @@ def ok_cancel(message, title="CCAR_EOL", text_color=None, background_color=None,
             title=title,
             text_color=text_color,
             background_color=background_color,
-            font=font
+            font=("Arial", size_font)
         )
         logger.debug(f"Popup '{message}': {rsp}")
         if not rsp:
-            return ""
+            return None
         return rsp
     except Exception:
         logger.exception(
             "An Exception occurred when displaying ok cancel popup window."
         )
-        return ""
+        return None
 
 def notify(message, title="Message", fade_ms=0, display_ms=10000):
     """
@@ -121,7 +139,7 @@ def notify(message, title="Message", fade_ms=0, display_ms=10000):
     except Exception:
         logger.exception("An Exception occurred when displaying notify popup window.")
 
-def quick_msg(message, display_sec=10, text_color="white", background_color="black", font=("Arial", 18)):
+def quick_msg(message, display_sec=10, text_color="white", background_color="black", size_font=18):
     """
     Briefly display an auto closing message box with no buttons or header. Displayed in middle of screen.
 
@@ -132,7 +150,7 @@ def quick_msg(message, display_sec=10, text_color="white", background_color="bla
         display_sec (int, optional): The number of seconds to display the window before auto closing. Defaults to 10.
         text_color (str, optional): The color of the window text. Keep it simple. Defaults to None.
         background_color (str, optional): The color of the window background. Keep it simple. Defaults to None.
-        font (tuple(str, int), optional): The font type and text size of the message.
+        size_font (int), optional): The text size of the message.
     """
     try:
         sg.popup_quick_message(
@@ -140,13 +158,13 @@ def quick_msg(message, display_sec=10, text_color="white", background_color="bla
             auto_close_duration=display_sec,
             text_color=text_color,
             background_color=background_color,
-            font=font
+            font=("Arial", size_font)
         )
         time.sleep(display_sec)
     except Exception:
         logger.exception("An Exception occurred when displaying quick message popup window.")
 
-def serial(title="CCAR_EOL", text_color=None, background_color=None, font=("Arial", 18)):
+def serial(title="CCAR_EOL", text_color=None, background_color=None, size_font=(18)):
     """
     Display a window that prompts the user to enter a serial number 
 
@@ -154,14 +172,14 @@ def serial(title="CCAR_EOL", text_color=None, background_color=None, font=("Aria
         title (str, optional): The message window header. Defaults to "CCAR_EOL".
         text_color (str, optional): The color of the window text. Keep it simple. Defaults to None.
         background_color (str, optional): The color of the window background. Keep it simple. Defaults to None.
-        font (tuple(str, int), optional): The font type and text size of the message.
+        size_font (int), optional): The text size of the message.
 
     Returns:
-        str: The serial number entered by the user. "" if the window is closed.
+        str: The serial number entered by the user. None if the window is closed.
     """
     try:
         layout = [
-            [sg.Text(text='Serial:', text_color=text_color, font=font), sg.Input(key='SerialKey')]
+            [sg.Text(text='Serial:', text_color=text_color, font=(f"Arial", size_font)), sg.Input(key='SerialKey')]
         ]
         window = sg.Window(title, layout, background_color=background_color, finalize=True)
         window['SerialKey'].bind("<Return>", "_Enter")
@@ -170,17 +188,18 @@ def serial(title="CCAR_EOL", text_color=None, background_color=None, font=("Aria
             event, values = window.read()
             logger.debug(f"Popup serial '{event}': N/A")
             if event == sg.WINDOW_CLOSED:
-                return ""
+                return None
             elif event == "SerialKey" + "_Enter":
                 str_serial = values['SerialKey']
                 logger.debug(f"Popup '{event}': {str_serial}")
+                window.close()
                 return str_serial
     except Exception:
         logger.exception("An Exception occurred when displaying quick message popup window.")
-        return ""
+        return None
 
 def image_yes_no(
-        message, image_path, title="CCAR_EOL", text_color=None, background_color=None, font=("Arial", 18)):
+        message, image_path, title="CCAR_EOL", text_color=None, background_color=None, size_font=18):
     """
     Display a imagen window with Yes and No button options.
 
@@ -192,14 +211,14 @@ def image_yes_no(
         title (str, optional): The message window header. Defaults to "CCAR_EOL".
         text_color (str, optional): The color of the window text. Keep it simple. Defaults to None.
         background_color (str, optional): The color of the window background. Keep it simple. Defaults to None.
-        font (tuple(str, int), optional): The font type and text size of the message.
+        size_font (int), optional): The text size of the message.
 
     Returns:
-        str: The text of the button selected by user; 'Yes' or 'No'. "" if the window is closed.
+        str: The text of the button selected by user; 'Yes' or 'No'. None if the window is closed.
     """
     try:
         layout = [
-            [sg.Text(message, text_color=text_color, font= font)],
+            [sg.Text(message, text_color=text_color, font=("Arial", size_font))],
             [sg.Image(filename=image_path)],
             [sg.Yes(button_color='green'), sg.No(button_color='red')]
         ]
@@ -209,11 +228,52 @@ def image_yes_no(
             event, _= window.read()
             logger.debug(f"Popup '{message}': {event}")
             if event == sg.WIN_CLOSED:
-                return ""
+                return None
             else:
+                window.close()
                 return event
     except Exception:
         logger.exception(
             "An Exception occurred when displaying quick message popup window."
         )
-        return ""
+        return None
+    
+def image_ok(
+        message, image_path, title="CCAR_EOL", text_color=None, background_color=None, size_font=18):
+    """
+    Display a imagen window with OKok button .Window remains open until OK is selected.
+
+    Blocking call.
+
+    Args:
+        message (str): The message window text.
+        image_path (str): The path to the image file.
+        title (str, optional): The message window header. Defaults to "CCAR_EOL".
+        text_color (str, optional): The color of the window text. Keep it simple. Defaults to None.
+        background_color (str, optional): The color of the window background. Keep it simple. Defaults to None.
+        size_font (int), optional): The text size of the message.
+
+    Returns:
+        str - The 'OK' text when clicked or None if window is closed.
+    """
+    try:
+        layout = [
+            [sg.Text(message, text_color=text_color, font=("Arial", size_font))],
+            [sg.Image(filename=image_path)],
+            [sg.OK()]
+        ]
+        window = sg.Window(title, layout, background_color=background_color, finalize=True)
+        
+        while True:
+            event, _= window.read()
+            logger.debug(f"Popup '{message}': {event}")
+            if event == sg.WIN_CLOSED:
+                return None
+            else:
+                window.close()
+                return event
+    except Exception:
+        logger.exception(
+            "An Exception occurred when displaying quick message popup window."
+        )
+        return None

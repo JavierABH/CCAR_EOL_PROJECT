@@ -1,1 +1,4 @@
-wifi , 1, 0
+power_on, Yes, Yes
+download_V4APP, Yes, Yes
+display, Yes, Yes
+value, F15, F10
