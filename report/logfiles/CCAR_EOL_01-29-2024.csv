@@ -6,3 +6,4 @@ Unit,,boolean,boolean,boolean,string
 Logic_operator,,==,==,==,<>
 Serial,,,,,
 21301230023,True,1,,,
+21301230023,True,fail,test,,

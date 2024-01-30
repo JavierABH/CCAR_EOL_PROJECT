@@ -31,81 +31,208 @@ logfiles_dir = os.path.join(local_path, 'logfiles')
 
 class History:
     def __init__(self):
-        self._create_log()
+        """
+        Initialize the History class and create a log file if it doesn't exist.
+
+        Returns:
+            None
+        """
+        try:
+            logger.debug(f"Initializing {__class__.__name__}")
+            self._create_log()
+        except Exception as e:
+            logger.exception(f"An error occurred when initializing History: {e}")
     
     def _generate_logfile_name(self):
+        """
+        Generates the name for the logfile based on the current date.
+
+        Returns:
+            str: The generated logfile name.
+        """
         today = datetime.now().strftime("%m-%d-%Y")
         return f"CCAR_EOL_{today}.csv"
     
     def _generate_logfile_path(self):
-        self.logfile_name = self._generate_logfile_name()
-        self.logfile_path = os.path.join(logfiles_dir, self.logfile_name)
-        return self.logfile_path
+        """
+        Generates the full path for the logfile.
+
+        Returns:
+            str: The generated logfile path.
+        """
+        try:
+            self.logfile_name = self._generate_logfile_name()
+            self.logfile_path = os.path.join(logfiles_dir, self.logfile_name)
+            return self.logfile_path
+        except Exception as e:
+            logger.exception(f"Error generating logfile path: {e}")
 
     def _create_log(self):
-        self.logfile_path = self._generate_logfile_path()
-        if not os.path.exists(self.logfile_path):
-            with open(self.logfile_path, mode='w', newline='') as file:
-                writer = csv.writer(file)
-                header = self._get_header()
-                writer.writerows(header)
-                serial_row = ["Serial"] + [""] * (len(header[0]) - 1)
-                writer.writerow(serial_row)
+        """
+        Creates a new log file if it doesn't exist.
+
+        Returns:
+            None
+        """
+        try:
+            self.logfile_path = self._generate_logfile_path()
+            if not os.path.exists(self.logfile_path):
+                with open(self.logfile_path, mode='w', newline='') as file:
+                    writer = csv.writer(file)
+                    header = self._get_header()
+                    writer.writerows(header)
+                    serial_row = ["Serial"] + [""] * (len(header[0]) - 1)
+                    writer.writerow(serial_row)
+                logger.debug(f"New logfile was created: {self.logfile_name}")
+        except Exception as e:
+            logger.exception(f"Error creating log file: {e}")
     
     def _get_column_data(self, column):
-        with open(testname_path, 'r') as file:
-            column_data = [line.strip().split(',')[column] for line in file]
-        return column_data
+        """
+        Retrieves data from a specific column in the testname file.
+
+        Args:
+            column (int): The index of the column to retrieve.
+
+        Returns:
+            list: A list containing the data from the specified column.
+
+        Exception:
+            Exception: If an error occurs while reading or processing the testname file.
+        """
+        try:
+            with open(testname_path, 'r') as file:
+                column_data = [line.strip().split(',')[column] for line in file]
+            return column_data
+        except Exception as e:
+            logger.exception(f"Error getting column data: {e}")
+            return []
 
     def _get_header(self):
-        testnames = self._get_column_data(0)
-        low_limits = self._get_column_data(1)
-        high_limits = self._get_column_data(2)
-        expected_values = self._get_column_data(3)
-        units = self._get_column_data(4)
-        logic_operators = self._get_column_data(5)
-        rows = [
-            testnames,
-            low_limits,
-            high_limits,
-            expected_values,
-            units,
-            logic_operators]
-        return rows
+        """
+        Retrieves header data from different columns in the testname file.
+
+        Returns:
+            list: A list containing rows of testnames, low_limits, high_limits,
+                  expected_values, units, and logic_operators.
+
+        Exception:
+            Exception: If an error occurs while reading or processing the testname file.
+        """
+        try:
+            testnames = self._get_column_data(0)
+            low_limits = self._get_column_data(1)
+            high_limits = self._get_column_data(2)
+            expected_values = self._get_column_data(3)
+            units = self._get_column_data(4)
+            logic_operators = self._get_column_data(5)
+            rows = [
+                testnames,
+                low_limits,
+                high_limits,
+                expected_values,
+                units,
+                logic_operators]
+            return rows
+        except Exception as e:
+            logger.exception(f"Error getting header data: {e}")
+            return []
     
     def add_results_to_logs(self, result_data):
-        self._create_log()
-        header = self._get_header()
-        expected_length = len(header[0])
-        result_data = result_data + [""] * (expected_length - len(result_data))
-        with open(self.logfile_path, mode='a', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerow(result_data)
+        """
+        Adds the provided result data to the log file.
+
+        Args:
+            result_data (list): List of data to be added to the log file.
+
+        Returns:
+            None
+        """
+        try:
+            self._create_log()
+            header = self._get_header()
+            expected_length = len(header[0])
+            result_data = result_data + [""] * (expected_length - len(result_data))
+            with open(self.logfile_path, mode='a', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow(result_data)
+            logger.debug(f"add data to serial:{result_data[0]}")
+        except Exception as e:
+            logger.exception(f"Error adding results to logs: {e}")
     
-    def _get_files(self, path):
-        loglines = []
-        with open(path) as file:
-            for line in file.readlines():
-                loglines.append(line.rstrip())
+    def _get_rows(self, path):
+        """
+        Reads and returns the rows from a file.
+
+        Args:
+            path (str): The path to the file.
+
+        Returns:
+            list: A list containing the rows read from the file.
+
+        Raises:
+            Exception: If an error occurs while reading the file.
+        """
+        try:
+            loglines = []
+            with open(path) as file:
+                for line in file.readlines():
+                    loglines.append(line.rstrip())
             return loglines
+        except Exception as e:
+            logger.exception(f"Error getting rows: {e}")
+            return []
         
     def _get_columns_byname(self, path, column):
-        with open(path, mode='r', newline='') as file:
-            reader = csv.DictReader(file)
-            column_data = [row[column] for row in reader]
-        return column_data
+        """
+        Retrieves data from a specific column in a CSV file using column names.
+
+        Args:
+            path (str): The path to the CSV file.
+            column (str): The name of the column to retrieve.
+
+        Returns:
+            list: A list containing the data from the specified column.
+
+        Raises:
+            Exception: If an error occurs while reading or processing the CSV file.
+        """
+        try:
+            with open(path, mode='r', newline='') as file:
+                reader = csv.DictReader(file)
+                column_data = [row[column] for row in reader]
+            return column_data
+        except Exception as e:
+            logger.exception(f"Error getting columns by name: {e}")
+            return []
         
     def get_fail_string(self, testname):
-        lines = self._get_files(testname_path)
-        for line in lines:
-            if testname in line:
-                low_limit = line.split(',')[1]
-                high_limit = line.split(',')[2]
-                expect_value = line.split(',')[3]
-                unit = line.split(',')[4]
-                logic_operator = line.split(',')[5]
-                
-        column_data = self._get_columns_byname(self.logfile_path, testname)
-        test_measurement = column_data[-1]
-        fail_string = f"|ftestres=0,{testname},{test_measurement},{high_limit},{low_limit},{expect_value},{unit},{logic_operator}"
-        return fail_string
+        """
+        Retrieves failure information for a specific testname.
+
+        Args:
+            testname (str): The testname to search for.
+
+        Returns:
+            str: A formatted string containing failure information.
+
+        Raises:
+            Exception: If an error occurs while processing the testname file or log file.
+        """
+        try:
+            lines = self._get_files(testname_path)
+            for line in lines:
+                if testname in line:
+                    low_limit = line.split(',')[1]
+                    high_limit = line.split(',')[2]
+                    expect_value = line.split(',')[3]
+                    unit = line.split(',')[4]
+                    logic_operator = line.split(',')[5]
+
+            column_data = self._get_columns_byname(self.logfile_path, testname)
+            test_measurement = column_data[-1]
+            fail_string = f"|ftestres=0,{testname},{test_measurement},{high_limit},{low_limit},{expect_value},{unit},{logic_operator}"
+            return fail_string
+        except Exception as e:
+            logger.exception(f"Error getting fail string: {e}")
+            return ""
