@@ -2,8 +2,8 @@
 __pycache__/
 *.py[cod]
 *$py.class
-WSConnector/Newtonsoft.Json.dll
-WSConnector/WSConnector.dll
+dlls/Newtonsoft.Json.dll
+dlls/WSConnector.dll
 
 # C extensions
 *.so
