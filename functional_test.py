@@ -47,11 +47,11 @@ def get_value(keyname):
 def main():
     pups = popups
     kt = Kimball_Trace()
-    
-    test_fail = None
-    test_data = None
-    
+
+
     while(True):
+        test_fail = None
+        test_data = []
         try:
             # Ask the DUT serial to operador
             serial = pups.serial('Captura de serial')
