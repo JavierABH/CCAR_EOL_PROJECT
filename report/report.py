@@ -83,7 +83,7 @@ class History:
                     writer = csv.writer(file)
                     header = self._get_header()
                     writer.writerows(header)
-                    final_row = info_columns + [""] * (len(header[0]) - 1)
+                    final_row = info_columns + [""] * (len(header[0]) - 7)
                     writer.writerow(final_row)
                 logger.debug(f"New logfile was created: {self.logfile_name}")
         except Exception as e:
@@ -121,7 +121,6 @@ class History:
         Exception:
             Exception: If an error occurs while reading or processing the testname file.
         """
-        self.test_rows = []
         try:
             blanks = [""] * 6
             testnames = blanks + self._get_column_data(0)
@@ -130,14 +129,14 @@ class History:
             expected_values = blanks + self._get_column_data(3)
             units = blanks + self._get_column_data(4)
             logic_operators = blanks + self._get_column_data(5)
-            self.test_rows = [
+            test_rows = [
                 testnames,
                 low_limits,
                 high_limits,
                 expected_values,
                 units,
                 logic_operators]
-            return self.test_rows
+            return test_rows
         except Exception as e:
             logger.exception(f"Error getting header data: {e}")
             return []
@@ -148,7 +147,13 @@ class History:
         Adds the provided result data to the log file.
 
         Args:
-            result_data (list): List of data to be added to the log file.
+            PartNumber (str): The DUT part number.
+            StartTime (str): The start time of the test.
+            EndTime (str): The end time of the test.
+            TraceEnable (str): Indicator of traceability enablement.
+            TestResult (str): The result of the test.
+            SerialNumber (str): The DUT serial number.
+            result_data (list): List of results of the test.
 
         Returns:
             None
@@ -156,7 +161,7 @@ class History:
         Date = datetime.now().strftime("%H:%M:%S")
         try:
             self._create_log()
-            expected_length_tests = len(self.test_rows[0])
+            expected_length_tests = len(self._get_header()[0]) - 7
             
             result_data = result_data + [""] * (expected_length_tests - len(result_data))
             data = [Date, PartNumber, StartTime, EndTime, 
