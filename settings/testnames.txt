@@ -1,5 +1,4 @@
 Testname,Low_limit,High_limit,Expected_Value,Unit,Logic_operator
-tracmex,NA,NA,NA,NA,NA
 power_on,True,True,True,boolean,==
 download_V4APP,True,True,True,boolean,==
 display,True,True,True,boolean,==

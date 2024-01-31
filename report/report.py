@@ -74,6 +74,8 @@ class History:
         Returns:
             None
         """
+        info_columns = ["Date", "PartNumber", "StartTime", 
+         "EndTime", "TraceEnable", "TestResult", "SerialNumber"]
         try:
             self.logfile_path = self._generate_logfile_path()
             if not os.path.exists(self.logfile_path):
@@ -81,8 +83,8 @@ class History:
                     writer = csv.writer(file)
                     header = self._get_header()
                     writer.writerows(header)
-                    serial_row = ["Serial"] + [""] * (len(header[0]) - 1)
-                    writer.writerow(serial_row)
+                    final_row = info_columns + [""] * (len(header[0]) - 1)
+                    writer.writerow(final_row)
                 logger.debug(f"New logfile was created: {self.logfile_name}")
         except Exception as e:
             logger.exception(f"Error creating log file: {e}")
@@ -119,26 +121,29 @@ class History:
         Exception:
             Exception: If an error occurs while reading or processing the testname file.
         """
+        self.test_rows = []
         try:
-            testnames = self._get_column_data(0)
-            low_limits = self._get_column_data(1)
-            high_limits = self._get_column_data(2)
-            expected_values = self._get_column_data(3)
-            units = self._get_column_data(4)
-            logic_operators = self._get_column_data(5)
-            rows = [
+            blanks = [""] * 6
+            testnames = blanks + self._get_column_data(0)
+            low_limits = blanks + self._get_column_data(1)
+            high_limits = blanks + self._get_column_data(2)
+            expected_values = blanks + self._get_column_data(3)
+            units = blanks + self._get_column_data(4)
+            logic_operators = blanks + self._get_column_data(5)
+            self.test_rows = [
                 testnames,
                 low_limits,
                 high_limits,
                 expected_values,
                 units,
                 logic_operators]
-            return rows
+            return self.test_rows
         except Exception as e:
             logger.exception(f"Error getting header data: {e}")
             return []
     
-    def add_results_to_logs(self, result_data):
+    def add_results_to_logs(self, PartNumber, StartTime, EndTime, TraceEnable,
+                            TestResult, SerialNumber, result_data):
         """
         Adds the provided result data to the log file.
 
@@ -148,14 +153,19 @@ class History:
         Returns:
             None
         """
+        Date = datetime.now().strftime("%H:%M:%S")
         try:
             self._create_log()
-            header = self._get_header()
-            expected_length = len(header[0])
-            result_data = result_data + [""] * (expected_length - len(result_data))
+            expected_length_tests = len(self.test_rows[0])
+            
+            result_data = result_data + [""] * (expected_length_tests - len(result_data))
+            data = [Date, PartNumber, StartTime, EndTime, 
+                    TraceEnable, TestResult, SerialNumber] + result_data
+            
             with open(self.logfile_path, mode='a', newline='') as file:
                 writer = csv.writer(file)
-                writer.writerow(result_data)
+                writer.writerow(data)
+                
             logger.debug(f"add data to serial:{result_data[0]}")
         except Exception as e:
             logger.exception(f"Error adding results to logs: {e}")
@@ -220,7 +230,7 @@ class History:
             Exception: If an error occurs while processing the testname file or log file.
         """
         try:
-            lines = self._get_files(testname_path)
+            lines = self._get_rows(testname_path)
             for line in lines:
                 if testname in line:
                     low_limit = line.split(',')[1]

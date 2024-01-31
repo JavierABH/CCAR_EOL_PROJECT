@@ -6,6 +6,7 @@ import os
 import clr
 from configparser import ConfigParser
 from pathlib import Path
+from datetime import datetime
 import logger as log
 from exceptions import TraceabilityError
 
@@ -126,7 +127,7 @@ class Kimball_Trace:
 
             if reply_part_number == '' or reply_part_number == 'One or more errors occurred.':
                 raise TraceabilityError('Connection error to the Traceability system.')
-            elif not (reply_part_number == self.part_number):
+            elif not reply_part_number == self.part_number:
                 logger.debug("The serial number scanned is incorrect DUT.")
                 return False
             else:
@@ -157,6 +158,8 @@ class Kimball_Trace:
         self.test_start_time = None
         self.test_end_time = None   
         try:
+            # Request the start time (initial).
+            self.test_start_time = self.get_date()
             # If the Traceability is deactivated in settings, no actions associated with the system will be executed.
             if not self.is_traceability_enable():
                 logger.debug(f'The traceability system is disabled. Backcheck not perfomed.')
@@ -174,8 +177,6 @@ class Kimball_Trace:
                 self.reply_TracMex = self.reply_TracMex.split('.')[0]
                 return False
             
-            # Request the start time (initial).
-            self.test_start_time = self.connector.CIMP_GetDateTimeStr()
             return True
 
         except TraceabilityError:
@@ -201,22 +202,27 @@ class Kimball_Trace:
                 An exception arises when there is an issue with inserting a record to the database.
         """       
         try:
+            # The time when test has ended is collected
+            self.test_end_time = self.get_date()
             # If the Traceability is deactivated in settings, no actions associated with the system will be executed.
             if not self.is_traceability_enable():
                 logger.debug(f'The traceability system is disabled. InsertProcess not perfomed.')
                 return True
-            
-            # The time when test has ended is collected and testing mode (flag) is switched off (False).    
-            self.test_end_time = self.connector.CIMP_GetDateTimeStr()
-            
+            # testing mode (flag) is switched off (False).  
             if not self.record_fail and test_result == 0:
                 logger.debug(f"Serial {self.serial_number} not failure saved {fail_string}.")
                 return True
                 
             # The test result with the details of the test setup is sent to the Traceability system.
             replyInsert = self.connector.InsertProcessDataWithFails(
-                self.serial_number, self.station_name, self.process_name,self.test_start_time,
-                self.test_end_time, test_result, fail_string, employee)
+                self.serial_number, 
+                self.station_name, 
+                self.process_name,
+                self.test_start_time,
+                self.test_end_time, 
+                test_result, 
+                fail_string, 
+                employee)
 
             # If the insertion of the record occurs 
             if "Ok El serial fue insertado" in replyInsert or "OK | Insertado Correctamente" in replyInsert:
@@ -333,3 +339,17 @@ class Kimball_Trace:
         except (TraceabilityError,Exception):
             logger.debug("An exception was raised when the status of traceability integration is checked.")
             raise
+        
+    def get_date(self):
+        """
+        Gets the current datetime from the traceability system or the local system.
+
+        Returns:
+            str: The current datetime.
+        """
+        if self.is_traceability_enable():
+            str_date = self.connector.CIMP_GetDateTimeStr()
+        else:
+            str_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        return str_date
