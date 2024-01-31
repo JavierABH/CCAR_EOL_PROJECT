@@ -46,7 +46,6 @@ class Kimball_Trace:
             
             # Lowercase the status in case of user input error.
             self.trace_enable = (config["OPTIONS"]["trace_enable"]).lower()
-            self.record_fail = (config["OPTIONS"]["record_fail"]).lower()
             self.part_number = config["TRIDENT_DISPLAY"]["part_number"]
             self.process_name = config["STATION"]["process_name"]
             self.station_name = config["STATION"]["station_name"]
@@ -208,13 +207,9 @@ class Kimball_Trace:
             if not self.is_traceability_enable():
                 logger.debug(f'The traceability system is disabled. InsertProcess not perfomed.')
                 return True
-            # testing mode (flag) is switched off (False).  
-            if not self.record_fail and test_result == 0:
-                logger.debug(f"Serial {self.serial_number} not failure saved {fail_string}.")
-                return True
-                
+            
             # The test result with the details of the test setup is sent to the Traceability system.
-            replyInsert = self.connector.InsertProcessDataWithFails(
+            self.replyInsert = self.connector.InsertProcessDataWithFails(
                 self.serial_number, 
                 self.station_name, 
                 self.process_name,
@@ -225,12 +220,11 @@ class Kimball_Trace:
                 employee)
 
             # If the insertion of the record occurs 
-            if "Ok El serial fue insertado" in replyInsert or "OK | Insertado Correctamente" in replyInsert:
+            if "Ok El serial fue insertado" in self.replyInsert or "OK | Insertado Correctamente" in self.replyInsert:
                 logger.debug(f"Serial {self.serial_number}: {self.process_name} was passed successfully.")
                 return True
             else:
-                self.replyInsert = replyInsert
-                raise TraceabilityError(f"An Error ocurred as the traceability failed to upload: {replyInsert}")
+                raise TraceabilityError(f"An Error ocurred as the traceability failed to upload: {self.replyInsert}")
 
         except TraceabilityError:
             logger.exception("An exception was raised when ending the tests in the Traceability system.")
@@ -316,8 +310,6 @@ class Kimball_Trace:
             if not self.is_status_set:
                 if self.trace_enable not in ['on', 'off']:
                     raise TraceabilityError(f"An error ocurred as the traceability's status is unrecognized : {self.trace_enable}.")
-                if self.record_fail not in ['on', 'off']:
-                    raise TraceabilityError(f"An error ocurred as the traceability's status is unrecognized : {self.record_fail}.")
             
             # When Status is not set, the status is parsed from the settings.ini
             # and converted to either 'Connected' or 'Disabled'.
@@ -327,11 +319,6 @@ class Kimball_Trace:
                     self.trace_enable = True
                 elif self.trace_enable == 'off':
                     self.trace_enable = False
-                    
-                if self.record_fail == 'on':
-                    self.record_fail = True
-                elif self.record_fail == 'off':
-                    self.record_fail = False
                     
                 self.is_status_set = True
                 
