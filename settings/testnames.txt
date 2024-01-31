@@ -1,5 +1,33 @@
 Testname,Low_limit,High_limit,Expected_Value,Unit,Logic_operator
-power_on,True,True,True,boolean,==
-download_V4APP,True,True,True,boolean,==
-display,True,True,True,boolean,==
-value,10,15,NA,string,<>
+System_start,True,NA,True,NA,==
+WiFi,connected,NA,True,NA,==
+LTE_modem_configuration,Successful,NA,Successful,NA,==
+Download_V4APP,True,NA,True,NA,==
+VDU_config,True,NA,True,NA,==
+LCD,True,NA,True,NA,==
+Touch,True,NA,True,NA,==
+Android_verification,11,NA,11,NA,==
+Software_verification,8,NA,8,NA,==
+Kernel_No_read,NA,NA,NA,NA,NA
+Model_Verification,VDU4t,NA,VDU4t,NA,==
+Mac_Address_read,NA,NA,NA,NA,NA
+iMX8_SN_read,NA,NA,NA,NA,NA
+IMEI_read,NA,NA,NA,NA,NA
+ICCID_read,NA,NA,NA,NA,NA
+LTE_modem_verification,Correct,NA,Correct,NA,==
+SIM_Number,NA,NA,NA,NA,NA
+APN_Interface_IP,NA,NA,NA,NA,NA
+Cell_Status,MSG SENT,READY,READY,NA,||
+STM8_FW,TBD,TBD,TBD,TBD,TBD
+GPS_IC_FW,$PTWSVER,TELIT,V50-1.2.0-N115-0104*32,NA,$PTWSVER,TELIT,V50-1.2.0-N115-0104*32,NA,==
+GPS,NA,NA,NA,NA,NA
+Adaptive_Brightness_low,0,5,NA,NA,><
+Accelerometer,TBD,TBD,TBD,TBD,TBD
+Power_Board_Temp,TBD,TBD,TBD,TBD,TBD
+Sys_Input_Voltage,TBD,TBD,TBD,TBD,TBD
+ Internal_speaker,True,NA,True,NA,==
+External_speaker,True,NA,True,NA,==
+Line_out,True,NA,True,NA,==
+Bluetooth,True,NA,True,NA,==
+CAN,TBD,TBD,TBD,TBD,TBD
+LIN,TBD,TBD,TBD,TBD,TBD
