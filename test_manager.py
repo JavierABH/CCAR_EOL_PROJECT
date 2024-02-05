@@ -24,6 +24,8 @@ class TestManager:
             pass
         except:
             pass
+        
+    get
 
     def system_start(self):
         if self.mode == 'manual':
