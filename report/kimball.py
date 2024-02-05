@@ -9,6 +9,7 @@ from pathlib import Path
 from datetime import datetime
 import logger as log
 from exceptions import TraceabilityError
+from utilities.utilities import get_value_ini
 
 # Paths to folders relative to this py file.
 local_path = os.path.dirname(os.path.abspath(__file__))
@@ -32,7 +33,7 @@ class Kimball_Trace:
             logger.debug(f"Initializing {__class__.__name__}")
             settings_fname = "settings.ini"
             config = ConfigParser()
-            config.read(os.path.join(local_path, settings_fname))
+            config.read(os.path.join(parent_path, 'settings', settings_fname))
             
             # Make a list of the settings to reference for TODO IMEI and ICCID
             self.case_settings_lst = [(s, dict(config.items(s))) for s in config.sections()]
@@ -42,11 +43,12 @@ class Kimball_Trace:
             
             # Settings to be used
             self.is_status_set = False
-            self.can_testing = False
             
             # Lowercase the status in case of user input error.
             self.trace_enable = (config["OPTIONS"]["trace_enable"]).lower()
-            self.part_number = config["TRIDENT_DISPLAY"]["part_number"]
+            self.mode = (config["OPTIONS"]["mode"]).lower()
+            logger.debug(f"Testing mode is: {self.mode}")
+            self.part_number = config["STATION"]["part_number"]
             self.process_name = config["STATION"]["process_name"]
             self.station_name = config["STATION"]["station_name"]
             
@@ -234,29 +236,6 @@ class Kimball_Trace:
             logger.exception("An error occurred when indicating ending of tests in the traceability system.")
             return False
     
-    def get_value_ini(self, info, keyname):
-        """
-        Get the value associated with a specific keyname from the provided info.
-
-        Parameters:
-            info (list): List of tuples containing key-value pairs.
-            keyname (str): The key to search for in the dictionaries within the tuples.
-
-        Returns:
-            The value associated with the specified keyname. Returns None if the key is not found.
-
-        Exceptions:
-            An exception is raised if an error occurs while searching for the keyname in the info list.
-        """
-        try:
-            for tupla in info:
-                if keyname in tupla[1]:
-                    return tupla[1][keyname]
-            return None
-        except Exception:
-            logger.exception("An error occurred when get key types of upload data in the traceability system.")
-            raise
-    
     def send_info_alternate(self, serial_alternate, type_alt, keyname):
         """
         Sends alternate information to the Traceability system.
@@ -272,7 +251,7 @@ class Kimball_Trace:
         Exceptions:
             An exception is raised if an error occurs during the execution of the method.
         """
-        type_alt = int(self.get_value_ini(self.case_settings_lst, keyname))
+        type_alt = int(get_value_ini(self.case_settings_lst, keyname))
         
         try:
             # If the Traceability is deactivated in settings, no actions associated with the system will be executed.

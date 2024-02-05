@@ -26,6 +26,8 @@ try:
     from gui import popups
     from report.kimball import Kimball_Trace
     from configparser import ConfigParser
+    from utilities.utilities import get_value_ini
+    from test_manager import TestManager
     
 except ImportError as ie:
     logger.exception(f"An error occurred during initial import. Exiting.\n{ie}")
@@ -35,23 +37,14 @@ except Exception:
     sys.exit()
 logger.debug('Importing completed.')
 
-settings_fname = "test_settings.ini"
-config = ConfigParser()
-config.read(os.path.join(app_path, 'settings', settings_fname))
-settings_lst = [(s, dict(config.items(s))) for s in config.sections()]
-
-def get_value(keyname):
-    value = Kimball_Trace().get_value_ini(settings_lst, keyname)
-    return value
-
 def main():
     pups = popups
     kt = Kimball_Trace()
+    test = TestManager(kt.mode)
 
-
+    settings_lst = kt.case_settings_lst
+    
     while(True):
-        test_fail = None
-        test_data = []
         try:
             # Ask the DUT serial to operador
             serial = pups.serial('Captura de serial')
@@ -72,14 +65,14 @@ def main():
                 continue
             
             while(True):
-                result_turn_on = popups.image_yes_no('test', get_value('path_image_1'))
+                result_turn_on = popups.image_yes_no('test', get_value_ini(settings_lst, 'path_image_1'))
                 if result_turn_on == 'No':
                     popups.ok('Unidad no enciendo, entregar a analisis', background_color= 'red')
                     test_fail = 'power_on'
                     test_data = 'False'
                     break
 
-                popups.image_ok('Presione OK cuando la unidad muestre esta pantalla', get_value('path_image_2'))
+                popups.image_ok('Presione OK cuando la unidad muestre esta pantalla', get_value_ini(settings_lst, 'path_image_2'))
             
         except Exception as e:
             logger.exception(f'The sequence is closing for exception, {e}')

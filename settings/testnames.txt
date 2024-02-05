@@ -25,7 +25,7 @@ Adaptive_Brightness_low,0,5,NA,NA,><
 Accelerometer,TBD,TBD,TBD,TBD,TBD
 Power_Board_Temp,TBD,TBD,TBD,TBD,TBD
 Sys_Input_Voltage,TBD,TBD,TBD,TBD,TBD
- Internal_speaker,True,NA,True,NA,==
+Internal_speaker,True,NA,True,NA,==
 External_speaker,True,NA,True,NA,==
 Line_out,True,NA,True,NA,==
 Bluetooth,True,NA,True,NA,==

@@ -4,7 +4,6 @@ Logger is responsible for create a logfile and saves the register actions module
 
 import logging
 from logging.handlers import RotatingFileHandler
-from datetime import datetime
 from os.path import join as join
 
 def make_logger(f_hdlr="file", log_prefix="", save_path=".", _datetime=None, **kwargs):
