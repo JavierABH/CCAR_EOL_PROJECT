@@ -25,10 +25,10 @@ try:
     import sys
     from gui import popups
     from report.kimball import Kimball_Trace
-    from configparser import ConfigParser
-    from utilities.utilities import get_value_ini
+    from report.report import History
     from test_manager import TestManager
-    
+    from utilities.ping import scan_ip
+
 except ImportError as ie:
     logger.exception(f"An error occurred during initial import. Exiting.\n{ie}")
     sys.exit()
@@ -38,24 +38,37 @@ except Exception:
 logger.debug('Importing completed.')
 
 def main():
-    pups = popups
     kt = Kimball_Trace()
-    test = TestManager(kt.mode)
-
+    logfile = History()
     settings_lst = kt.case_settings_lst
     
+    test = TestManager(kt.mode, settings_lst)
+    operator = None
+    last_scan_time = None
     while(True):
+        test.reset_failure()
+        failstring = ""
+        pass_fail = 1
+        failure = ""
+        
         try:
+            operator, last_scan_time = test.check_operator(operator, last_scan_time)
+            if operator in [None, '']:
+                popups.ok('Numero de empleado no valido, vuelva a escanear', background_color= 'red')
+                operator = None
+                last_scan_time = None
+                continue
+
             # Ask the DUT serial to operador
-            serial = pups.serial('Captura de serial')
+            serial = popups.serial('Serial:', 'Captura de serial')
             if serial == None:
                 popups.quick_msg('Cerrando la secuencia', display_sec= 5)
-                logger.debug('Sequence is closing')
+                logger.info('Sequence is closing')
                 break
-            elif serial == "" or not kt.valid_serial(serial):
+            elif serial == "" or not kt.valid_serial(serial, 1):
                 popups.ok('Serial no valido, vuelva a escanear', background_color= 'red')
                 continue
-            
+                
             if not kt.valid_partnumber(serial):
                 popups.ok('El numero de parte escaneado es incorrecto', background_color= 'red')
                 continue
@@ -63,21 +76,40 @@ def main():
             if not kt.start_test():
                 popups.ok(kt.reply_TracMex, background_color= 'red')
                 continue
-            
+            # Init test
             while(True):
-                result_turn_on = popups.image_yes_no('test', get_value_ini(settings_lst, 'path_image_1'))
-                if result_turn_on == 'No':
-                    popups.ok('Unidad no enciendo, entregar a analisis', background_color= 'red')
-                    test_fail = 'power_on'
-                    test_data = 'False'
+                if not test.system_start():
+                    break
+                
+                list_ip = scan_ip()
+                if len(list_ip) > 1:
+                    popups.ok('Se ha detectado dos UUT encendidas\n'
+                           'apague la que no esta usando', background_color= 'red')
                     break
 
-                popups.image_ok('Presione OK cuando la unidad muestre esta pantalla', get_value_ini(settings_lst, 'path_image_2'))
+            end_time = kt.get_date()
             
+            logfile.add_results_to_logs(kt.part_number,
+                                    kt.test_start_time,
+                                    end_time,
+                                    kt.trace_enable,
+                                    test.is_failure,
+                                    serial,
+                                    test.results
+                                    )
+            
+            if test.is_failure:
+                pass_fail = 0
+                failure = test.failure_name
+                failstring = logfile.get_fail_string(failure)
+                popups.ok(f'UUT fallo en {test.failure_name}', background_color= 'red')
+            
+            if not kt.send_result(pass_fail, failstring, operator):
+                popups.ok(kt.replyInsert, background_color= 'red')
+                
         except Exception as e:
             logger.exception(f'The sequence is closing for exception, {e}')
-            popups.quick_msg('Cerrando la secuencia por un error, revisar el logfile funcional_log.log', display_sec= 5) 
-        finally:
+            popups.quick_msg('Cerrando la secuencia por un error, revisar funcional_log', display_sec= 5) 
             sys.exit()
 
 if __name__ == '__main__':

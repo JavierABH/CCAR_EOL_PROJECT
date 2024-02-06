@@ -164,11 +164,12 @@ def quick_msg(message, display_sec=10, text_color="white", background_color="bla
     except Exception:
         logger.exception("An Exception occurred when displaying quick message popup window.")
 
-def serial(title="CCAR_EOL", text_color=None, background_color=None, size_font=(18)):
+def serial(message, title="CCAR_EOL", text_color=None, background_color=None, size_font=(18)):
     """
     Display a window that prompts the user to enter a serial number 
 
     Args:
+        message (str): The message window text.
         title (str, optional): The message window header. Defaults to "CCAR_EOL".
         text_color (str, optional): The color of the window text. Keep it simple. Defaults to None.
         background_color (str, optional): The color of the window background. Keep it simple. Defaults to None.
@@ -179,18 +180,18 @@ def serial(title="CCAR_EOL", text_color=None, background_color=None, size_font=(
     """
     try:
         layout = [
-            [sg.Text(text='Serial:', text_color=text_color, font=(f"Arial", size_font)), sg.Input(key='SerialKey')]
+            [sg.Text(text=message, text_color=text_color, font=(f"Arial", size_font)), sg.Input(key='Key')]
         ]
         window = sg.Window(title, layout, background_color=background_color, finalize=True)
-        window['SerialKey'].bind("<Return>", "_Enter")
+        window['Key'].bind("<Return>", "_Enter")
 
         while True:
             event, values = window.read()
             logger.debug(f"Popup serial '{event}': N/A")
             if event == sg.WINDOW_CLOSED:
                 return None
-            elif event == "SerialKey" + "_Enter":
-                str_serial = values['SerialKey']
+            elif event == "Key" + "_Enter":
+                str_serial = values['Key']
                 logger.debug(f"Popup '{event}': {str_serial}")
                 window.close()
                 return str_serial

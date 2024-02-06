@@ -1,9 +1,0 @@
-,,,,,,Testname,power_on,download_V4APP,display,value
-,,,,,,Low_limit,True,True,True,10
-,,,,,,High_limit,True,True,True,15
-,,,,,,Expected_Value,True,True,True,NA
-,,,,,,Unit,boolean,boolean,boolean,string
-,,,,,,Logic_operator,==,==,==,<>
-Date,PartNumber,StartTime,EndTime,TraceEnable,TestResult,SerialNumber,,,,
-13:49:46,12EASDSAF1 + 1,01-31-2024,01-31-2024,False,False,12323123,123213,,,
-13:50:26,12EASDSAF1 + 1,01-31-2024,01-31-2024,False,False,12323123,123123,,,

@@ -81,3 +81,5 @@ def scan_ip():
         except queue.Empty:
             break
     return ip_list
+
+print(scan_ip())

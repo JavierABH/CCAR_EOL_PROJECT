@@ -1,9 +1,0 @@
-Testname,power_on,download_V4APP,display,value
-Low_limit,True,True,True,10
-High_limit,True,True,True,15
-Expected_Value,True,True,True,
-Unit,boolean,boolean,boolean,string
-Logic_operator,==,==,==,<>
-Serial,,,,
-21301230023,1,,,
-21301230023,fail,test,,

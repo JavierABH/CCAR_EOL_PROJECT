@@ -153,7 +153,7 @@ class Kimball_Trace:
                 (Boolean) - The result of whether the method was executed successfully. 
 
         Exception:
-                An exception arises when there is a mismatch between the 
+                An exception arises when there is a mismatch
         """
         self.reply_TracMex = None
         self.test_start_time = None

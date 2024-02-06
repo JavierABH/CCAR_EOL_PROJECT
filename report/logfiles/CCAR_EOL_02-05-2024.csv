@@ -1,0 +1,10 @@
+,,,,,,Testname,system_start,wifi,lte_modem_configuration,download_v4app,vdu_config,lcd,touch,android_verification,software_verification,kernel_no_read,model_verification,mac_address_read,imx8_sn_read,imei_read,iccid_read,lte_modem_verification,sim_number,apn_interface_ip,cell_status,stm8_fw,gps_ic_FW,gps,adaptive_brightness_low,accelerometer,power_board_temp,sys_input_voltage,internal_speaker,external_speaker,line_out,bluetooth,can,lin
+,,,,,,Low_limit,True,connected,Successful,True,True,True,True,11,8,NA,VDU4t,NA,NA,NA,NA,Correct,NA,NA,MSG SENT,TBD,$PTWSVER,NA,0,TBD,TBD,TBD,True,True,True,True,TBD,TBD
+,,,,,,High_limit,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,READY,TBD,TELIT,NA,5,TBD,TBD,TBD,NA,NA,NA,NA,TBD,TBD
+,,,,,,Expected_Value,True,True,Successful,True,True,True,True,11,8,NA,VDU4t,NA,NA,NA,NA,Correct,NA,NA,READY,TBD,V50-1.2.0-N115-0104*32,NA,NA,TBD,TBD,TBD,True,True,True,True,TBD,TBD
+,,,,,,Unit,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,TBD,NA,NA,NA,TBD,TBD,TBD,NA,NA,NA,NA,TBD,TBD
+,,,,,,Logic_operator,==,==,==,==,==,==,==,==,==,NA,==,NA,NA,NA,NA,==,NA,NA,||,TBD,$PTWSVER,NA,><,TBD,TBD,TBD,==,==,==,==,TBD,TBD
+Date,PartNumber,StartTime,EndTime,TraceEnable,TestResult,SerialNumber,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+17:38:00,47752400001+87-A,2024-02-05 17:37:57,,False,True,000047752400001240090008005664,False,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+17:44:02,47752400001+87-A,2024-02-05 17:44:00,2024-02-05 17:44:02,False,True,000047752400001240090008005664,False,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+18:52:02,47752400001+87-A,2024-02-05 18:51:00,2024-02-05 18:52:02,False,True,1,True,False,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
